@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <!-- 本jedis的jar为2.7.0版本 -->
+
+    <context:property-placeholder location="classpath:redis.properties" />
+
+    <!-- jedisPool配置信息 -->
+    <!--<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">-->
+        <!--<property name="maxTotal" value="1000"/> &lt;!&ndash; 控制一个pool可分配多少个jedis实例 &ndash;&gt;-->
+        <!--<property name="maxIdle" value="200" />   &lt;!&ndash; 控制一个pool最多有多少个状态为idle(空闲)的jedis实例 &ndash;&gt;-->
+        <!--<property name="maxWaitMillis" value="2000" />  &lt;!&ndash; 表示当borrow一个jedis实例时，最大的等待时间，如果超过等待时间，则直接抛出JedisConnectionException &ndash;&gt;-->
+        <!--<property name="testOnBorrow" value="true" /> &lt;!&ndash; 在borrow一个jedis实例时，是否提前进行validate操作；如果为true，则得到的jedis实例均是可用的 &ndash;&gt;-->
+    <!--</bean>-->
+
+    <!--<bean id="jedisPool" class="redis.clients.jedis.JedisPool" scope="singleton">-->
+        <!--<constructor-arg name="poolConfig" ref="jedisPoolConfig" />-->
+        <!--<constructor-arg name="host" value="127.0.0.1"></constructor-arg>-->
+        <!--<constructor-arg name="port" value="6379"></constructor-arg>-->
+    <!--</bean>-->
+
+
+
+    <!--<bean id="jedisClient" class="com.sf.ssm.serviceImpl.JedisClientSingle" />-->
+
+
+    <!-- ###### start   Redis Configuration (Owner) ####### -->
+    <!-- Redis Template -->
+    <bean id="redisCityTemplate" class="com.sf.ssm.redis.RedisTemplate">
+        <property name="redisDataSource" ref="redisCityDataSource" />
+    </bean>
+
+    <bean id="redisCityDataSource" class="com.sf.ssm.redis.RedisDataSourceProvider">
+        <property name="shardedJedisPool" ref="shardedJedisSentinelPool" />
+    </bean>
+
+    <!-- Cluster Redis Configuration Pool -->
+    <bean id="shardedJedisSentinelPool" class="com.sf.ssm.redis.ShardedJedisSentinelPool">
+        <constructor-arg index="0">
+            <set>
+                <!--<value>${redis.master1.name}</value>-->
+                <value>redis-master</value>
+            </set>
+        </constructor-arg>
+        <constructor-arg index="1">
+            <set>
+                <!--<value>${redis.sentinel1.address}</value>-->
+                <!--<value>${redis.sentinel2.address}</value>-->
+                <value>127.0.0.1:26379</value>
+                <value>127.0.0.1:26379</value>
+            </set>
+        </constructor-arg>
+        <constructor-arg index="2" ref="jedisCityPoolConfig" />
+        <constructor-arg index="3" value="1200" />
+        <constructor-arg index="4" value="zhaoqi" />
+        <!--<constructor-arg index="3" value="${redis.master.timeout}" type="int" />-->
+        <!--<constructor-arg index="4" value="${redis.master.password}" />-->
+    </bean>
+
+    <!-- Single Redis Node Configuration
+	<bean id="shardedJedisPool" class="redis.clients.jedis.ShardedJedisPool">
+		<constructor-arg index="0" ref="jedisPoolConfig" />
+		<constructor-arg index="1">
+			<list>
+				<bean name="master" class="redis.clients.jedis.JedisShardInfo">
+					<constructor-arg index="0" value="${redis.master1.host}" />
+					<property name="password" value="${redis.master.password}" />
+				</bean>
+			</list>
+		</constructor-arg>
+	</bean>-->
+    <!--Jedis Pool Config-->
+    <bean id="jedisCityPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxTotal" value="1400" />
+        <property name="maxIdle" value="1000" />
+        <property name="numTestsPerEvictionRun" value="1024" />
+        <property name="timeBetweenEvictionRunsMillis" value="30000" />
+        <property name="minEvictableIdleTimeMillis" value="-1" />
+        <property name="softMinEvictableIdleTimeMillis" value="10000" />
+        <property name="maxWaitMillis" value="1500" />
+        <property name="testOnBorrow" value="false" />
+        <property name="testWhileIdle" value="true" />
+        <property name="testOnReturn" value="false" />
+        <property name="jmxEnabled" value="true" />
+        <property name="jmxNamePrefix" value="ucmp" />
+        <property name="blockWhenExhausted" value="false" />
+    </bean>
+
+    <!-- ###### end   Redis Configuration (Owner)   ####### -->
+</beans>
